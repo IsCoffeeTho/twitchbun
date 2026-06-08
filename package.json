@@ -1,7 +1,12 @@
 {
-	"name": "twitchlib",
+	"name": "twitchbun",
+	"version": "0.0.1",
 	"module": "src/app.ts",
 	"type": "module",
+	"scripts": {
+		// "test": "bun test",
+		// "start": "bun run example.ts",
+	},
 	"devDependencies": {
 		"@types/bun": "latest"
 	},
