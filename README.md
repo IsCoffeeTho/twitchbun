@@ -1,4 +1,4 @@
-# twitchlib
+# twitchbun
 
 ```ts
 // index.ts

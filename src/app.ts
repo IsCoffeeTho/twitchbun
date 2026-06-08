@@ -196,3 +196,17 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 	app.chat = await TwitchChat(app);
 	return app;
 }
+
+import { type ITwitchChatMessage, type ITwitchBadge, type TwitchChatMessageType, type TwitchChatMessageFragment, type ITwitchChatter } from "./chatMessage";
+
+export {
+	type ITwitchChat,
+	type ITwitchUser,
+	type ITwitchStreamerUser,
+	type IEventSub,
+	type ITwitchChatMessage,
+	type ITwitchBadge,
+	type TwitchChatMessageType,
+	type TwitchChatMessageFragment,
+	type ITwitchChatter,
+};

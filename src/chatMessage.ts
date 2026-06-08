@@ -61,7 +61,7 @@ export type TwitchChatMessageFragment =
 			};
 	  };
 
-enum TwitchChatMessageType {
+export enum TwitchChatMessageType {
 	Text,
 	Highlighted,
 	RedeemedSubOnly,
