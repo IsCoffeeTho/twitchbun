@@ -55,7 +55,7 @@ export default async function TwitchChat(twitchApp: ITwitchApp) {
 	);
 
 	twitchApp.events.sub(
-		"channel.chat.clear_user_message",
+		"channel.chat.clear_user_messages",
 		1,
 		{
 			broadcaster_user_id: twitchApp.streamer.id,

@@ -15,4 +15,3 @@ app.chat.on("message", (ev) => {
 	console.log(`\x1b[1m${ev.chatter.displayName}\x1b[0m: ${ev.text}`);
 });
 ```
-
