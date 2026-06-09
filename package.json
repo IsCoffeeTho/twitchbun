@@ -1,7 +1,7 @@
 {
 	"name": "twitchbun",
-	"version": "0.0.3",
-	"module": "src/app.ts",
+	"version": "0.0.4",
+	"module": "index.ts",
 	"type": "module",
 	"devDependencies": {
 		"@types/bun": "latest"
