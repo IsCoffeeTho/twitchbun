@@ -1,6 +1,5 @@
 import type { ITwitchApp } from "./app";
-import type { ITwitchUser } from "./user";
-import TwitchUser from "./user";
+import TwitchUser, { type ITwitchUser } from "./user";
 
 export interface ITwitchChatter {
 	id: string;

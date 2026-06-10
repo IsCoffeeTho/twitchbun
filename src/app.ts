@@ -5,11 +5,10 @@ import TwitchUser from "./user";
 import TwitchChat from "./chat";
 import type { IEventSub } from "./eventsub";
 import EventSub from "./eventsub";
-import wrapAsStreamer, { type ITwitchStreamerUser } from "./streamer";
 
 const TWITCH_API_ENDPOINT = `https://api.twitch.tv/helix`;
 
-const SCOPES = ["channel:bot", "user:write:chat", "user:read:chat", "channel:manage:broadcast", "moderator:read:followers"];
+const SCOPES = ["channel:bot", "user:write:chat", "user:read:chat", "channel:manage:broadcast", "channel:read:subscriptions", "moderator:read:followers"];
 
 export type TwitchAppOptions = {
 	clientId: string;
@@ -20,6 +19,7 @@ export type TwitchAppOptions = {
 		refresh_token: string;
 	};
 	streamerUsername: string;
+	scopes: string[];
 };
 
 export type APIResponse<T> = Promise<false | T>;
@@ -29,11 +29,12 @@ export type API = {
 };
 
 export interface ITwitchApp {
-	bot: ITwitchUser;
-	streamer: ITwitchStreamerUser;
-	chat: ITwitchChat;
 	api: API;
 	events: IEventSub;
+	bot: ITwitchUser;
+
+	streamer: ITwitchUser;
+	chat: ITwitchChat;
 }
 
 export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitchApp> {
@@ -67,12 +68,18 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 	async function loadTokens() {
 		if (!opts.tokensFile) return;
 		if (!(await opts.tokensFile.exists())) return;
-		let tokens = await opts.tokensFile.json();
-		if (tokens) opts.tokens = tokens;
+		let tokensFile = await opts.tokensFile.json();
+		if (!tokensFile) return;
+		if (tokensFile.scopes.length != opts.scopes.length) return;
+		for (var scope of tokensFile.scopes) {
+			if (opts.scopes.indexOf(scope) == -1)
+				return;
+		}
+		opts.tokens = tokensFile.tokens;
 	}
 
 	async function saveTokens() {
-		if (opts.tokensFile) await opts.tokensFile.write(JSON.stringify(opts.tokens, null, "\t"));
+		if (opts.tokensFile) await opts.tokensFile.write(JSON.stringify({ tokens: opts.tokens, scopes: [...opts.scopes] }, null, "\t"));
 	}
 
 	async function refreshTokens() {
@@ -155,7 +162,7 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 				client_id: opts.clientId,
 				redirect_uri: `http://localhost:3000`,
 				response_type: `code`,
-				scope: SCOPES.join(" "),
+				scope: opts.scopes.join(" "),
 			})}`,
 		);
 		console.log(authURL.href);
@@ -172,7 +179,10 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 				Authorization: `OAuth ${opts.tokens?.access_token}`,
 			},
 		});
-		if (!validationResponse.ok || !(await refreshTokens())) return false;
+		if (!validationResponse.ok || !(await refreshTokens())) {
+			opts.tokens = undefined;
+			return false;
+		}
 		let validation = <any>await validationResponse.json();
 		botUserID = validation.user_id;
 		return true;
@@ -182,17 +192,17 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 	while (!(await login())) console.log("log in attempt failed, retrying...");
 
 	let app: ITwitchApp = {
-		bot: <ITwitchUser>{},
-		streamer: <ITwitchStreamerUser>{},
-		chat: <ITwitchChat>{},
 		api,
 		events: <IEventSub>{},
+		bot: <ITwitchUser>{},
+		streamer: <ITwitchUser>{},
+		chat: <ITwitchChat>{},
 	};
-	app.bot = await TwitchUser(app, botUserID);
+
 	app.events = await EventSub(app);
 
-	app.streamer = wrapAsStreamer(app, await TwitchUser(app, opts.streamerUsername, true));
-
+	app.bot = await TwitchUser(app, botUserID);
+	app.streamer = await TwitchUser(app, opts.streamerUsername, true);
 	app.chat = await TwitchChat(app);
 	return app;
 }
@@ -202,7 +212,6 @@ import { type ITwitchChatMessage, type ITwitchBadge, type TwitchChatMessageType,
 export {
 	type ITwitchChat,
 	type ITwitchUser,
-	type ITwitchStreamerUser,
 	type IEventSub,
 	type ITwitchChatMessage,
 	type ITwitchBadge,

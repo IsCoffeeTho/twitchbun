@@ -98,7 +98,8 @@ export default async function EventSub(twitchApp: ITwitchApp): Promise<IEventSub
 				},
 			});
 
-			if (!subscription) return false;
+			if (!subscription) throw new Error(`Couldn't sub to "${event}".`);
+
 			eventEmitter.on(event, ev => {
 				if (ev.subscription.version != version) return;
 				for (var prop in condition) {

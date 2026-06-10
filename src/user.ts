@@ -1,4 +1,6 @@
 import type { ITwitchApp } from "./app";
+import type { UserEventMap } from "./events/userEvents";
+import UserEventEmitter from "./events/userEvents";
 
 type TwitchAPIUser = {
 	id: string;
@@ -37,9 +39,11 @@ export interface ITwitchUser {
 	offlineImage: string;
 	email?: string;
 	createdAt: Date;
+	on<K extends keyof UserEventMap>(event: K, fn: (ev: UserEventMap[K]) => any): any;
+	once<K extends keyof UserEventMap>(event: K, fn: (ev: UserEventMap[K]) => any): any;
+	off<K extends keyof UserEventMap>(event: K, fn: (ev: UserEventMap[K]) => any): any;
 }
 
-/** @TODO 'on' function can subscribe to eventsub events */
 export default async function TwitchUser(twitchApp: ITwitchApp, id: string, login = false) {
 	let userAPI = await twitchApp.api.GET<{ data: TwitchAPIUser[] }>(`/users?${login ? "login" : "id"}=${id}`);
 	if (!userAPI) throw new Error(`User "${id}" cannot be found`);
@@ -55,6 +59,9 @@ export default async function TwitchUser(twitchApp: ITwitchApp, id: string, logi
 		offlineImage: user.offline_image_url,
 		email: user.email,
 		createdAt: new Date(user.created_at),
+		on() { },
+		once() { },
+		off() { }
 	};
-	return userObject;
+	return UserEventEmitter(twitchApp, userObject);
 }

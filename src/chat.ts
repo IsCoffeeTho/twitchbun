@@ -1,16 +1,15 @@
-import type { ITwitchApp } from "./app";
+import type { ITwitchApp, ITwitchChatMessage, ITwitchChatter, ITwitchUser } from "./app";
 import { EventEmitter } from "events";
-import TwitchChatMessage, { TwitchChatter, type ITwitchChatMessage, type ITwitchChatter } from "./chatMessage";
-import type { ITwitchStreamerUser } from "./streamer";
+import TwitchChatMessage, { TwitchChatter } from "./chatMessage";
 
-type chatEventMap = {
+export type chatEventMap = {
 	message: ITwitchChatMessage;
 	clear: {
-		streamer: ITwitchStreamerUser;
+		streamer: ITwitchUser;
 	};
 	purge: {
 		chatter: ITwitchChatter;
-		streamer: ITwitchStreamerUser;
+		streamer: ITwitchUser;
 	};
 };
 
