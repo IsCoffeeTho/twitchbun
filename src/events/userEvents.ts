@@ -2,6 +2,17 @@ import type { ITwitchApp, ITwitchChatter, ITwitchUser } from "../app";
 import { TwitchChatter } from "../chatMessage";
 
 export type UserEventMap = {
+	streamStarted: {
+		id: string;
+		streamer: ITwitchUser;
+		type: "live" | "playlist" | "watch_party" | "premiere" | "rerun";
+		startedAt: Date;
+	},
+	streamEnded: {
+		streamer: ITwitchUser;
+		type: "live" | "playlist" | "watch_party" | "premiere" | "rerun";
+		startedAt: Date;
+	},
 	follow: {
 		chatter: ITwitchChatter;
 		streamer: ITwitchUser;
@@ -50,6 +61,37 @@ export default function UserEventEmitter(twitchApp: ITwitchApp, user: ITwitchUse
 	user.on = async (event: string, fn: (...arg: any[]) => any) => {
 		let eventSub: { name: string; version: number; condition: any; cnv(ev: any): void } | undefined = undefined;
 		switch (event) {
+			case "streamStarted":
+				eventSub = {
+					name: "stream.online",
+					version: 1,
+					condition: {
+						broadcaster_user_id: user.id,
+					},
+					cnv(ev: any) {
+						fn({
+							id: ev.id,
+							streamer: user,
+							type: ev.type,
+							startedAt: new Date(ev.started_at),
+						});
+					},
+				};
+				break;
+			case "streamEnded":
+				eventSub = {
+					name: "stream.offline",
+					version: 1,
+					condition: {
+						broadcaster_user_id: user.id,
+					},
+					cnv(ev: any) {
+						fn({
+							streamer: user,
+						});
+					},
+				};
+				break;
 			case "follow":
 				eventSub = {
 					name: "channel.follow",

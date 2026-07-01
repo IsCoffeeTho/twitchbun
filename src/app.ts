@@ -72,8 +72,7 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 		if (!tokensFile) return;
 		if (tokensFile.scopes.length != opts.scopes.length) return;
 		for (var scope of tokensFile.scopes) {
-			if (opts.scopes.indexOf(scope) == -1)
-				return;
+			if (opts.scopes.indexOf(scope) == -1) return;
 		}
 		opts.tokens = tokensFile.tokens;
 	}
@@ -108,6 +107,20 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 			refresh_token: tokenData.refresh_token,
 		};
 		await saveTokens();
+		return true;
+	}
+
+	async function validateTokens() {
+		let validationResponse = await fetch(`https://id.twitch.tv/oauth2/validate`, {
+			headers: {
+				Authorization: `OAuth ${(<{ access_token: string }>opts.tokens).access_token}`,
+			},
+		});
+		if (!validationResponse.ok) {
+			return false;
+		}
+		let validationBody = <any>await validationResponse.json();
+		botUserID = validationBody.user_id;
 		return true;
 	}
 
@@ -174,17 +187,16 @@ export default async function TwitchApp(opts: TwitchAppOptions): Promise<ITwitch
 	async function login() {
 		if (!opts.tokens) await requestAuth();
 
-		let validationResponse = await fetch(`https://id.twitch.tv/oauth2/validate`, {
-			headers: {
-				Authorization: `OAuth ${opts.tokens?.access_token}`,
-			},
-		});
-		if (!validationResponse.ok || !(await refreshTokens())) {
+		let i = 3;
+		let valid = await validateTokens();
+		while (!valid && i--) {
+			await refreshTokens();
+			valid = await validateTokens();
+		}
+		if (!valid) {
 			opts.tokens = undefined;
 			return false;
 		}
-		let validation = <any>await validationResponse.json();
-		botUserID = validation.user_id;
 		return true;
 	}
 
